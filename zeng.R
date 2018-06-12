@@ -3,10 +3,18 @@ library(rhdf5)
 library(Matrix)
 
 ZENG_DIR <- "~/data/biccn_180521/Zeng"
-TEN_X_DIR <- file.path(ZENG_DIR, "10X_cells_MOp")
 
-zeng_10x <- function() {
-  h5_data <- h5read(file.path(TEN_X_DIR, "umi_counts.h5"), "/mm10_mrna")
+zeng_10x_cells <- function() {
+  return(zeng_10x("10X_cells_MOp"))
+}
+
+zeng_10x_nuclei <- function() {
+  return(zeng_10x("10x_nuclei_MOp"))
+}
+
+zeng_10x <- function(ten_x_dir) {
+  h5_data <- h5read(file.path(ZENG_DIR, ten_x_dir, "umi_counts.h5"),
+  	     	    "/mm10_mrna")
   result <- sparseMatrix(i = h5_data$indices + 1,
                          j = column_indices(h5_data$indptr),
 			 x = h5_data$data)
