@@ -1,3 +1,10 @@
+*~
+*.html
+*.pdf
+*.md
+*.rds
+figure
+
 # History files
 .Rhistory
 .Rapp.history

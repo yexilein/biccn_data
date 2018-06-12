@@ -1,0 +1,35 @@
+
+library(cellrangerRkit)
+
+fuse_10x_dataset <- function(data_directory, output_name) {
+  subdirectories <- list.dirs(data_directory, full.names = TRUE,
+                              recursive = FALSE)
+  gbm <- lapply(subdirectories,
+                function(dir) cellrangerRkit::load_cellranger_matrix(dir))
+  for (i in seq_along(gbm)) {
+    colnames(gbm[[i]]) <- change_barcode_suffix(gbm[[i]], i)
+  }
+  check_rowname_consistency(gbm)
+  count_matrix <- do.call(cbind, lapply(gbm, Biobase::exprs))
+  saveRDS(count_matrix, output_name)
+}
+
+check_rowname_consistency <- function(dataset_list) {
+  ref <- rownames(dataset_list[[1]])
+  is_consistent<- all(sapply(dataset_list,
+                             function(d) all(rownames(d) == ref)))
+  if (!is_consistent) {
+    stop("Row names are not consistent across datasets.")
+  }
+}
+
+change_barcode_suffix <- function(dataset, suffix) {
+  return(paste0(
+      substring(colnames(dataset), 1, 17), suffix
+  ))
+}
+
+if (!interactive()) {
+  args = commandArgs(trailingOnly = TRUE)
+  fuse_10x_dataset(args[1], args[2])
+}

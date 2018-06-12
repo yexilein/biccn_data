@@ -1,0 +1,81 @@
+---
+title: "Formatting and QC for 10x data (Macosko/Regev)"
+output: html_notebook
+---
+
+# Looking at the data
+
+The data is 10x data, we use cellranger to access to the hdf5 files.
+
+```{r message=FALSE}
+library(cellrangerRkit)
+```
+
+```{r}
+macosko_dir <- "~/work/data/BICCN_18_05_21/Macosko_Regev/motorcortex_snrnaseq_10x/macosko_motor_cortex_1/"
+macosko_files <- paste0("171218_p56m1", letters[1:8])
+```
+
+```{r}
+gbm_1 <- cellrangerRkit::load_cellranger_matrix(file.path(macosko_dir, macosko_files[1]))
+gbm_1
+```
+
+Check basic size information:
+
+```{r}
+library(pryr)
+dim(Biobase::exprs(gbm_1))
+object_size(gbm_1)
+object_size(as.matrix(Biobase::exprs(gbm_1)))
+```
+
+Cellranger uses a sparse representation, so the original matrix is small.
+Normally, cellranger already filtered the data, so it should only contain cells with a minimal number of different genes expressed.
+
+```{r}
+gene_statistics <- data.frame(number_transcripts = apply(Biobase::exprs(gbm_1), 1, sum))
+cell_statistics <- data.frame(number_transcripts = apply(Biobase::exprs(gbm_1), 2, sum))
+```
+
+```{r}
+library(tidyverse)
+ggplot(gene_statistics) + geom_histogram(aes(number_transcripts)) + scale_x_continuous(trans="log1p")
+ggplot(cell_statistics) + geom_histogram(aes(number_transcripts)) + scale_x_continuous(trans="log1p")
+min(cell_statistics$number_transcripts)
+sum(gene_statistics$number_transcripts > 0)
+```
+
+Indeed, the minimal number of transcript is 1117. However, we will have to filter out gene ourselves.
+
+
+# Formatting the data
+
+We can fuse the data together and create a single cell experiment object with all the samples.
+
+```{r message = FALSE}
+library(SingleCellExperiment)
+```
+
+```{r}
+gbm <- lapply(macosko_files, function(f) cellrangerRkit::load_cellranger_matrix(file.path(macosko_dir, f)))
+```
+
+```{r}
+length(gbm)
+```
+```{r}
+count_matrix <- do.call(cbind, lapply(gbm, Biobase::exprs))
+```
+
+The matrix can be built as long as we use a sparse representation:
+
+```{r}
+dim(count_matrix)
+object_size(count_matrix)
+```
+
+```{r}
+saveRDS(count_matrix, "macosko.rds")
+```
+
