@@ -1,9 +1,18 @@
 
 library(cellrangerRkit)
 
-fuse_10x_dataset <- function(data_directory, output_name) {
-  subdirectories <- list.dirs(data_directory, full.names = TRUE,
-                              recursive = FALSE)
+DATA_DIR <- "/home/fischer/data/biccn_180521/Macosko_Regev"
+
+macosko_10x <- function(data_dir = DATA_DIR) {
+  return(fuse_10x_dataset(file.path(data_dir, "macosko_motor_cortex_1")))
+}
+
+regev_10x <- function(data_dir = DATA_DIR) {
+  return(fuse_10x_dataset(file.path(data_dir, "regev_motor_cortex_2")))
+}
+
+fuse_10x_dataset <- function(data_dir) {
+  subdirectories <- list.dirs(data_dir, full.names = TRUE, recursive = FALSE)
   gbm <- lapply(subdirectories,
                 function(dir) cellrangerRkit::load_cellranger_matrix(dir))
   for (i in seq_along(gbm)) {
@@ -11,7 +20,13 @@ fuse_10x_dataset <- function(data_directory, output_name) {
   }
   check_rowname_consistency(gbm)
   count_matrix <- do.call(cbind, lapply(gbm, Biobase::exprs))
-  saveRDS(count_matrix, output_name)
+  return(count_matrix)
+}
+
+change_barcode_suffix <- function(dataset, suffix) {
+  return(paste0(
+      substring(colnames(dataset), 1, 17), suffix
+  ))
 }
 
 check_rowname_consistency <- function(dataset_list) {
@@ -23,13 +38,7 @@ check_rowname_consistency <- function(dataset_list) {
   }
 }
 
-change_barcode_suffix <- function(dataset, suffix) {
-  return(paste0(
-      substring(colnames(dataset), 1, 17), suffix
-  ))
-}
-
 if (!interactive()) {
   args = commandArgs(trailingOnly = TRUE)
-  fuse_10x_dataset(args[1], args[2])
+  saveRDS(fuse_10x_dataset(args[1]), args[2])
 }
