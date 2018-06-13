@@ -29,6 +29,13 @@ column_indices <- function(col_limits) {
   return(rep(seq_along(elements_per_col), elements_per_col))
 }
 
+zeng_smart_nuclei_counts <- function() {
+  result <- read.table(file.path(ZENG_DIR, "SMARTer_nuclei_MOp", "exon_counts.csv.gz"), header = TRUE, sep = ",")
+  rownames(result) <- result$sample_id
+  result <- subset(result, select = -sample_id)
+  return(t(Matrix(as.matrix(result), sparse = TRUE)))
+}
+
 zeng_metadata <- function(subdir) {
   clusters <- read.table(
     file.path(ZENG_META, subdir, "cluster.membership.csv"),
