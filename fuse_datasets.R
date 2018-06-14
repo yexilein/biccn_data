@@ -1,31 +1,6 @@
 library(SummarizedExperiment)
 source("zeng.R")
-source("my_metaneighbor.R")
-
-test_metaneighbor <- function(dataset, n_centroids = 0) {
-  runtime <- system.time(
-    all_cells <- MetaNeighborUS(dataset$data,
-				dataset$study_id,
-				as.character(dataset$cell_type),
-				n_centroids = n_centroids)
-  )
-  print(runtime)
-  return(all_cells)
-}
-
-test_plots <- function(results, subdir = "") {
-  to_plot <- (results + t(results))/2
-  output_dir <- file.path("results", subdir)  
-  pdf(file.path(output_dir, "macosko_zeng.pdf"))
-  plot_NV_heatmap(to_plot, label_size = 0.5)
-  dev.off()
-  pdf(file.path(output_dir, "macosko_zeng_ranked.pdf"))
-  plot_NV_heatmap(to_plot, label_size = 0.5, norm = "rank")
-  dev.off()
-  pdf(file.path(output_dir, "macosko_zeng_log.pdf"))
-  plot_NV_heatmap(to_plot, label_size = 0.5, norm = "log")
-  dev.off()
-}
+source("/home/fischer/code/metaneighbor_v2/variableGene.R")
 
 create_dataset <- function() {
   return(fuse_datasets(list(
