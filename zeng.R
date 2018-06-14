@@ -2,7 +2,7 @@
 library(rhdf5)
 library(Matrix)
 
-ZENG_DIR <- "~/data/biccn_180521/Zeng"
+ZENG_DIR <- "/home/fischer/data/biccn/raw_data_180521/Zeng"
 ZENG_META <- file.path(ZENG_DIR, "BICCN_analysis_AIBS")
 
 zeng_10x_cells_counts <- function() {

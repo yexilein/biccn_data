@@ -1,6 +1,6 @@
+library(MetaNeighbor)
 library(SummarizedExperiment)
 source("zeng.R")
-source("/home/fischer/code/metaneighbor_v2/variableGene.R")
 
 create_dataset <- function() {
   return(fuse_datasets(list(

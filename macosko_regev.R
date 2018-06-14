@@ -1,13 +1,13 @@
 
 library(cellrangerRkit)
 
-DATA_DIR <- "/home/fischer/data/biccn_180521/Macosko_Regev"
+MACOSKO_DIR <- "/home/fischer/data/biccn/raw_data_180521/Macosko_Regev"
 
-macosko_10x <- function(data_dir = DATA_DIR) {
+macosko_10x <- function(data_dir = MACOSKO_DIR) {
   return(fuse_10x_dataset(file.path(data_dir, "macosko_motor_cortex_1")))
 }
 
-regev_10x <- function(data_dir = DATA_DIR) {
+regev_10x <- function(data_dir = MACOSKO_DIR) {
   return(fuse_10x_dataset(file.path(data_dir, "regev_motor_cortex_2")))
 }
 
