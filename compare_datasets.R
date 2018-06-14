@@ -2,76 +2,101 @@ library(SummarizedExperiment)
 source("zeng.R")
 source("my_metaneighbor.R")
 
-test_metaneighbor <- function(dataset = NULL) {
-  if (is.null(dataset)) { dataset <- filter_genes(fused_data()) }
+test_metaneighbor <- function(dataset, n_centroids = 0) {
   runtime <- system.time(
     all_cells <- MetaNeighborUS(dataset$data,
 				dataset$study_id,
-				as.character(dataset$cell_type))
+				as.character(dataset$cell_type),
+				n_centroids = n_centroids)
   )
   print(runtime)
   return(all_cells)
 }
 
-test_plots <- function(results) {
-  pdf('results/macosko_zeng_whole.pdf')
-  plot_NV_heatmap((results + t(results))/2, as_dist = TRUE, label_size = 0.5)
+test_plots <- function(results, subdir = "") {
+  to_plot <- (results + t(results))/2
+  output_dir <- file.path("results", subdir)  
+  pdf(file.path(output_dir, "macosko_zeng.pdf"))
+  plot_NV_heatmap(to_plot, label_size = 0.5)
   dev.off()
-  macosko_ind <- get_study_id(rownames(results)) == 1
-  zeng_ind <- get_study_id(rownames(results)) == 2
-  macosko_votes <- results[zeng_ind, macosko_ind]
-  zeng_votes <- results[macosko_ind, zeng_ind]
-  pdf('results/macosko_vs_zeng.pdf')
-  plot_NV_heatmap(macosko_votes)
+  pdf(file.path(output_dir, "macosko_zeng_ranked.pdf"))
+  plot_NV_heatmap(to_plot, label_size = 0.5, norm = "rank")
   dev.off()
-  pdf('results/zeng_vs_macosko.pdf')
-  plot_NV_heatmap(zeng_votes)
-  dev.off()
-  pdf('results/macosko_vs_zeng_summary.pdf')
-  plot_NV_heatmap((macosko_votes + t(zeng_votes))/2)
+  pdf(file.path(output_dir, "macosko_zeng_log.pdf"))
+  plot_NV_heatmap(to_plot, label_size = 0.5, norm = "log")
   dev.off()
 }
 
-fused_data <- function() {
-  zeng <- zeng_10x_nuclei()
-  macosko <- macosko_10x()
-  fused_data <- cbind(macosko$data, zeng$data)
-  study_id <- rep(1:2, sapply(c(macosko$data, zeng$data), ncol))
-  cell_type = c(as.character(macosko$cell_type),
-                as.character(zeng$cell_type))
+create_dataset <- function() {
+  return(fuse_datasets(list(
+    zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x()
+  )))
+}
+
+zeng_10x_cells <- function() {
+  return(counts_with_metadata(readRDS("zeng_10x_cells.rds"),
+                              zeng_metadata("10X_cells_AIBS"),
+			      "zeng_10x_cells"))
+}
+
+zeng_10x_nuclei <- function() {
+  return(counts_with_metadata(zeng_10x_nuclei_counts(),
+                              zeng_metadata("10X_nuclei_AIBS"),
+			      "zeng_10x_nuclei"))
+}
+
+zeng_smart_nuclei <- function() {
+  return(counts_with_metadata(filter_10x_genes(readRDS("zeng_smart_nuclei.rds")),
+                              zeng_metadata("SmartSeq_nuclei_AIBS"),
+			      "zeng_smart_nuclei"))
+}
+
+macosko_10x <- function() {
+  return(counts_with_metadata(readRDS("macosko.rds"),
+			      zeng_metadata("10X_nuclei_Macosko"),
+			      "macosko_10x"))
+}
+
+regev_10x <- function() {
+  return(counts_with_metadata(readRDS("regev_10x.rds"),
+			      zeng_metadata("10X_nuclei_Regev"),
+			      "regev_10x"))
+}
+
+counts_with_metadata <- function(counts, notes, study_id) {
+  colnames(counts) <- simplify_barcode_suffix(colnames(counts))
+  cell_id_match <- match(colnames(counts), notes$cell_id)
+  counts <- counts[, !is.na(cell_id_match)]
+  labels <- notes$cluster_label[cell_id_match[!is.na(cell_id_match)]]
+  return(list(data = counts, cell_type = labels,
+              study_id = rep(study_id, length(labels))))
+}
+
+filter_10x_genes <- function(matrix_) {
+  gene_mapping <- readRDS("sara_mapping.rds")
+  match_10x_genes <- match(gene_mapping$name, rownames(matrix_))
+  unfound_genes <- is.na(match_10x_genes)
+  match_10x_genes[unfound_genes] <- 1
+  result <- matrix_[match_10x_genes,]
+  result[unfound_genes,] <- 0
+  rownames(result) <- gene_mapping$ensembl
+  return(result)
+}
+
+fuse_datasets <- function(datasets) {
+  fused_data <- do.call(cbind, lapply(datasets, function(df) df$data))
+  study_id <- do.call(c, lapply(datasets, function(df) df$study_id))
+  cell_type <- do.call(c, lapply(datasets,
+                                 function(df) as.character(df$cell_type)))
   colnames(fused_data) <- paste(study_id, cell_type, sep = "|")
   return(list(data = fused_data, study_id = study_id, cell_type = cell_type))
 }
 
-zeng_10x_cells <- function() {
-  return(zeng_10x(readRDS("zeng.rds"),
-                  zeng_metadata("10X_cells_AIBS")))
-}
-
-zeng_10x_nuclei <- function() {
-  return(zeng_10x(zeng_10x_nuclei_counts(),
-                  zeng_metadata("10X_nuclei_AIBS")))
-}
-
-zeng_10x <- function(counts, notes) {
-  colnames(counts) <- simplify_barcode_suffix(colnames(counts))
-  cell_id_match <- match(colnames(counts), notes$cell_id)
-  counts <- counts[, !is.na(cell_id_match)]
-  return(list(data = counts, cell_type = notes$cluster_label))
-}
-
-macosko_10x <- function() {
-  macosko <- readRDS("macosko.rds")
-  notes <- zeng_metadata("10X_nuclei_Macosko")
-  cell_id_match <- match(colnames(macosko), notes$cell_id)
-  macosko <- macosko[, !is.na(cell_id_match)]
-  labels <- notes$cluster_label[cell_id_match[!is.na(cell_id_match)]]
-  return(list(data = macosko, cell_type = labels))
-}
-
-filter_genes <- function(dataset) {
+filter_variable_genes <- function(dataset) {
   centroids <- compute_centroids(dataset$data)
+  rownames(centroids) <- as.character(rownames(centroids))
   variable_genes <- variableGenes(SummarizedExperiment(centroids), exp_labels=get_study_id(colnames(centroids)))
   dataset$data <- dataset$data[variable_genes, ]
   return(dataset)
 }
+
