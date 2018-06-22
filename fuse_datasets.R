@@ -77,12 +77,18 @@ fuse_datasets <- function(datasets) {
   return(list(data = fused_data, study_id = study_id, cell_type = cell_type))
 }
 
-filter_variable_genes <- function(dataset) {
+centroid_variable_genes <- function(dataset) {
   centroids <- compute_centroids(dataset$data)
   rownames(centroids) <- as.character(rownames(centroids))
-  variable_genes <- variableGenes(SummarizedExperiment(centroids), exp_labels=get_study_id(colnames(centroids)))
-  dataset$data <- dataset$data[variable_genes, ]
-  return(dataset)
+  return(variableGenes(SummarizedExperiment(centroids), exp_labels=get_study_id(colnames(centroids))))
+}
+
+sample_based_variable_genes <- function(dataset) {
+  indices <- sample.int(ncol(dataset$data), 10000)
+  dat <- dataset$data[, indices]
+  colnames(dat) <- seq_len(ncol(dat))
+  rownames(dat) <- as.character(rownames(dat))
+  return(variableGenes(SummarizedExperiment(dat), exp_labels=dataset$study_id[indices]))
 }
 
 compute_centroids <- function(dat) {
