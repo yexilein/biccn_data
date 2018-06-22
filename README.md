@@ -31,7 +31,7 @@ These files contain simple data frames mapping Ensembl IDs to gene names.
 
 ## Combined datasets
 
- - 10x_smart.rds: dataset combining all nuclei studies with metadata from the AIBS, used as an input for MetaNeighbor.
- - 10x_smart_var_genes.rds: same as above, except that only highly variable genes were kept.
- - atac_10x_smart.rds: same as 10x_smart.rds + ATACseq, all genes.
- - atac_10x_smart_var_genes.rds: same as above, highly variable genes.
+ - smart_10x_nuclei.rds: dataset combining all nuclei studies with metadata from the AIBS, used as an input for MetaNeighbor.
+ - smart_10x_var_genes.rds: highly variable genes for smart_10x_nuclei dataset.
+ - atac_smart_10x.rds: same as 10x_smart.rds + ATACseq.
+ - atac_smart_10x_var_genes.rds: highly variable genes for the above dataset.
