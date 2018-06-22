@@ -12,5 +12,5 @@ ecker_atac_gene_counts <- function() {
 
 ecker_atac_metadata <- function(level=4) {
   metadata <- read.table(file.path(ATAC_DIR, "MOp_multi_level_cluster.csv"), sep = ",", header = TRUE)
-  return(data.frame(cell_id = metadata$barcode, cluster_label = metadata[, level+1]))
+  return(data.frame(cell_id = metadata$barcode, cluster_label = paste0("zzz", metadata[, level+1])))
 }
