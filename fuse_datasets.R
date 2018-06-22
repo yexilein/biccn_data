@@ -1,10 +1,12 @@
 library(MetaNeighbor)
 library(SummarizedExperiment)
+
+source("ecker.R")
 source("zeng.R")
 
 create_dataset <- function() {
   return(fuse_datasets(list(
-    zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x()
+    zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x(), ecker_atac()
   )))
 }
 
@@ -38,8 +40,16 @@ regev_10x <- function() {
 			      "regev_10x"))
 }
 
-counts_with_metadata <- function(counts, notes, study_id) {
-  colnames(counts) <- simplify_barcode_suffix(colnames(counts))
+ecker_atac <- function() {
+  return(counts_with_metadata(filter_10x_genes(readRDS("ecker_atac_gene_counts.rds")),
+                              ecker_atac_metadata(),
+                              "ecker_atac", simplify_barcode = FALSE))
+}
+
+counts_with_metadata <- function(counts, notes, study_id, simplify_barcode = TRUE) {
+  if (simplify_barcode) {
+    colnames(counts) <- simplify_barcode_suffix(colnames(counts))
+  }
   cell_id_match <- match(colnames(counts), notes$cell_id)
   counts <- counts[, !is.na(cell_id_match)]
   labels <- notes$cluster_label[cell_id_match[!is.na(cell_id_match)]]
@@ -75,3 +85,14 @@ filter_variable_genes <- function(dataset) {
   return(dataset)
 }
 
+compute_centroids <- function(dat) {
+  result <- lapply(unique(colnames(dat)),
+                   function(c) rowMeans(as.matrix(dat[, colnames(dat) == c])))
+  result <- do.call(cbind, result)
+  colnames(result) <- unique(colnames(dat))
+  return(result)
+}
+
+get_study_id <- function(cluster_name) {
+  return(sapply(strsplit(cluster_name, "\\|"), head, 1))
+}
