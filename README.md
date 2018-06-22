@@ -5,6 +5,7 @@ This directory contains R modules parsing the biccn data (synchronized with Gith
 
 ## Study specific modules
  - macosko_regev.R: functions used to parse the data from the Macosko_Regev subdirectory.
+ - ecker.R: functions used to parse the data and metadata from the Ecker subdirectories
  - zeng.R: functions used to parse the data and metadata from the Zeng subdirectory.
 
 ## Fusion modules
@@ -16,6 +17,7 @@ This directory contains R modules parsing the biccn data (synchronized with Gith
 ## Gene count matrices
 
 All these files contain sparse matrices with gene counts, rownames are gene names and colnames are sample names.
+ - ecker_atac_gene_counts.rds: ATACseq data from Ecker.
  - macosko.rds: 10x nuclei from Macosko.
  - regev_10x.rds: 10x nuclei from Regev.
  - zeng_10x_cells.rds: 10x cells from Zeng.
@@ -29,5 +31,7 @@ These files contain simple data frames mapping Ensembl IDs to gene names.
 
 ## Combined datasets
 
- - input_dataset.rds: dataset combining all nuclei studies with metadata from the AIBS, used as an input for MetaNeighbor.
- - input_dataset_variable_genes.rds: same as above, except that only highly variable genes were kept.
+ - 10x_smart.rds: dataset combining all nuclei studies with metadata from the AIBS, used as an input for MetaNeighbor.
+ - 10x_smart_var_genes.rds: same as above, except that only highly variable genes were kept.
+ - atac_10x_smart.rds: same as 10x_smart.rds + ATACseq, all genes.
+ - atac_10x_smart_var_genes.rds: same as above, highly variable genes.
