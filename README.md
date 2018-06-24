@@ -35,3 +35,5 @@ These files contain simple data frames mapping Ensembl IDs to gene names.
  - smart_10x_var_genes.rds: highly variable genes for smart_10x_nuclei dataset.
  - atac_smart_10x.rds: same as 10x_smart.rds + ATACseq.
  - atac_smart_10x_var_genes.rds: highly variable genes for the above dataset.
+ - atac_cells_nuclei.rds: same as atac_smart_10x + AIBS 10x cells.
+ - atac_cells_nuclei.rds_var_genes.rds: highly variable genes for the above dataset.

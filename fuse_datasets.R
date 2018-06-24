@@ -6,7 +6,7 @@ source("zeng.R")
 
 create_dataset <- function() {
   return(fuse_datasets(list(
-    zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x(), ecker_atac()
+    zeng_10x_cells(), zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x(), ecker_atac()
   )))
 }
 
