@@ -6,7 +6,7 @@ source("zeng.R")
 
 create_dataset <- function() {
   return(fuse_datasets(list(
-    zeng_10x_cells(), zeng_10x_nuclei(), zeng_smart_nuclei(), macosko_10x(), regev_10x(), ecker_atac()
+    zeng_10x_cells(), zeng_10x_nuclei(), zeng_smart_nuclei(), ecker_snmc()
   )))
 }
 
@@ -23,9 +23,10 @@ zeng_10x_nuclei <- function() {
 }
 
 zeng_smart_nuclei <- function() {
-  return(counts_with_metadata(filter_10x_genes(readRDS("zeng_smart_nuclei.rds")),
-                              zeng_metadata("SmartSeq_nuclei_AIBS"),
-			      "zeng_smart_nuclei"))
+  return(counts_with_metadata(
+    filter_10x_genes(readRDS("zeng_smart_nuclei.rds"), ensembl = FALSE),
+    zeng_metadata("SmartSeq_nuclei_AIBS"), "zeng_smart_nuclei"
+  ))
 }
 
 macosko_10x <- function() {
@@ -41,9 +42,17 @@ regev_10x <- function() {
 }
 
 ecker_atac <- function() {
-  return(counts_with_metadata(filter_10x_genes(readRDS("ecker_atac_gene_counts.rds")),
-                              ecker_atac_metadata(),
-                              "ecker_atac", simplify_barcode = FALSE))
+  return(counts_with_metadata(
+    filter_10x_genes(-readRDS("ecker_atac_gene_counts.rds")), ensembl = FALSE,
+    ecker_atac_metadata(level = 2), "ecker_atac", simplify_barcode = FALSE
+  ))
+}
+
+ecker_snmc <- function() {
+  return(counts_with_metadata(
+    filter_10x_genes(ecker_snmc_gene_counts()),
+    ecker_snmc_metadata(), "ecker_snmc", simplify_barcode = FALSE
+  ))
 }
 
 counts_with_metadata <- function(counts, notes, study_id, simplify_barcode = TRUE) {
@@ -57,9 +66,13 @@ counts_with_metadata <- function(counts, notes, study_id, simplify_barcode = TRU
               study_id = rep(study_id, length(labels))))
 }
 
-filter_10x_genes <- function(matrix_) {
+filter_10x_genes <- function(matrix_, ensembl=TRUE) {
   gene_mapping <- readRDS("sara_mapping.rds")
-  match_10x_genes <- match(gene_mapping$name, rownames(matrix_))
+  if (ensembl) {
+    match_10x_genes <- match(gene_mapping$ensembl, rownames(matrix_))
+  } else {
+    match_10x_genes <- match(gene_mapping$name, rownames(matrix_))
+  }
   unfound_genes <- is.na(match_10x_genes)
   match_10x_genes[unfound_genes] <- 1
   result <- matrix_[match_10x_genes,]
