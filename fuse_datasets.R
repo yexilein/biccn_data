@@ -43,15 +43,15 @@ regev_10x <- function() {
 
 ecker_atac <- function() {
   return(counts_with_metadata(
-    filter_10x_genes(-readRDS("ecker_atac_gene_counts.rds")), ensembl = FALSE,
+    filter_10x_genes(readRDS("ecker_atac_gene_counts.rds")), ensembl = FALSE,
     ecker_atac_metadata(level = 2), "ecker_atac", simplify_barcode = FALSE
   ))
 }
 
 ecker_snmc <- function() {
   return(counts_with_metadata(
-    filter_10x_genes(ecker_snmc_gene_counts()),
-    ecker_snmc_metadata(), "ecker_snmc", simplify_barcode = FALSE
+    filter_10x_genes(-ecker_snmc_gene_counts()),
+    ecker_snmc_metadata(level = 1), "ecker_snmc", simplify_barcode = FALSE
   ))
 }
 
