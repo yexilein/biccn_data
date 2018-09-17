@@ -42,3 +42,10 @@ ecker_snmc_metadata <- function(level=7) {
   metadata <- read.table(file.path(SNMC_DIR, "4. cluster_martix.csv"), sep = ",", header = TRUE)
   return(data.frame(cell_id = metadata$cell_id, cluster_label = metadata[, level+1]))
 }
+
+ecker_cluster_id_to_label <- function(cluster_ids, level) {
+  metadata <- read.table(file.path(SNMC_DIR, "4. cluster_martix.csv"), sep = ",", header = TRUE)
+  ids <- metadata[, level+1]
+  labels <- metadata[match(0:max(ids), ids), 8]
+  return(labels[as.numeric(cluster_ids) + 1])
+}

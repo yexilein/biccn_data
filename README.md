@@ -18,7 +18,7 @@ This directory contains R modules parsing the biccn data (synchronized with Gith
 
 All these files contain sparse matrices with gene counts, rownames are gene names and colnames are sample names.
  - ecker_atac_gene_counts.rds: ATACseq data from Ecker.
- - macosko.rds: 10x nuclei from Macosko.
+ - macosko_10x.rds: 10x nuclei from Macosko.
  - regev_10x.rds: 10x nuclei from Regev.
  - zeng_10x_cells.rds: 10x cells from Zeng.
  - zeng_smart_nuclei.rds: SMARTer nuclei from Zeng.
@@ -28,12 +28,3 @@ All these files contain sparse matrices with gene counts, rownames are gene name
 These files contain simple data frames mapping Ensembl IDs to gene names.
  - regev_mapping.rds: mapping based on Regev's GTF file.
  - sara_mapping.rds: mapping based on Sara's data.
-
-## Combined datasets
-
- - smart_10x_nuclei.rds: dataset combining all nuclei studies with metadata from the AIBS, used as an input for MetaNeighbor.
- - smart_10x_var_genes.rds: highly variable genes for smart_10x_nuclei dataset.
- - atac_smart_10x.rds: same as 10x_smart.rds + ATACseq.
- - atac_smart_10x_var_genes.rds: highly variable genes for the above dataset.
- - atac_cells_nuclei.rds: same as atac_smart_10x + AIBS 10x cells.
- - atac_cells_nuclei.rds_var_genes.rds: highly variable genes for the above dataset.
