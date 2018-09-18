@@ -50,23 +50,7 @@ create_zeng_smart_nuclei <- function() {
   colnames(counts) <- gsub("\\.", "-", colnames(counts))
   clusters <- zeng_clusters("SMARTer_nuclei_MOp")
   data_ <- match_count_and_cluster_info(counts, clusters)
-  data_$counts <- filter_10x_genes(data_$counts)
   return(create_sce(data_$counts, data_$clusters, "zeng_smart_nuclei"))
-}
-
-filter_10x_genes <- function(matrix_, ensembl=TRUE) {
-  gene_mapping <- readRDS("sara_mapping.rds")
-  if (ensembl) {
-    match_10x_genes <- match(gene_mapping$ensembl, rownames(matrix_))
-  } else {
-    match_10x_genes <- match(gene_mapping$name, rownames(matrix_))
-  }
-  unfound_genes <- is.na(match_10x_genes)
-  match_10x_genes[unfound_genes] <- 1
-  result <- matrix_[match_10x_genes,]
-  result[unfound_genes,] <- 0
-  rownames(result) <- gene_mapping$ensembl
-  return(result)
 }
 
 create_zeng_smart_cells <- function() {
@@ -74,10 +58,17 @@ create_zeng_smart_cells <- function() {
   colnames(counts) <- gsub("\\.", "-", colnames(counts))
   clusters <- zeng_clusters("SMARTer_cells_MOp")
   data_ <- match_count_and_cluster_info(counts, clusters)
-  data_$counts <- filter_10x_genes(data_$counts)
   return(create_sce(data_$counts, data_$clusters, "zeng_smart_cells"))
 }
 
+filter_10x_genes <- function(dataset, ensembl=TRUE) {
+  gene_mapping <- readRDS("sara_mapping.rds")
+  gene_ids <- if (ensembl) gene_mapping$ensembl else gene_mapping$name
+  found_genes <- gene_ids %in% rownames(dataset)
+  result <- dataset[as.character(gene_ids)[found_genes],]
+  rownames(result) <- as.character(gene_mapping$ensembl)[found_genes]
+  return(result)
+}
 
 macosko_10x <- function() {
   return(counts_with_metadata(readRDS("macosko.rds"),
