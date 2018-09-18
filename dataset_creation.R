@@ -21,6 +21,15 @@ match_count_and_cluster_info <- function(counts, clusters, simplify_barcode = FA
   return(list(counts = counts, clusters = clusters))
 }
 
+simplify_barcode_suffix <- function(barcodes) {
+  suffix <- substring(barcodes, 18)
+  suffix_values <- unique(suffix)
+  for (i in seq_along(suffix_values)) {
+    suffix[suffix == suffix_values[i]] <- i
+  }
+  return(paste0(substring(barcodes, 1, 17), suffix))
+}
+
 create_sce <- function(counts, clusters, study_id) {
   rownames(counts) <- as.character(rownames(counts))
   colnames(counts) <- as.character(colnames(counts))
@@ -97,45 +106,16 @@ ecker_snmc <- function() {
 }
 
 fuse_datasets <- function(datasets) {
-  fused_data <- do.call(cbind, lapply(datasets, function(df) df$data))
-  study_id <- do.call(c, lapply(datasets, function(df) df$study_id))
-  cell_type <- do.call(c, lapply(datasets,
-                                 function(df) as.character(df$cell_type)))
-  colnames(fused_data) <- paste(study_id, cell_type, sep = "|")
-  return(list(data = fused_data, study_id = study_id, cell_type = cell_type))
-}
-
-centroid_variable_genes <- function(dataset) {
-  centroids <- compute_centroids(dataset$data)
-  rownames(centroids) <- as.character(rownames(centroids))
-  return(variableGenes(SummarizedExperiment(centroids), exp_labels=get_study_id(colnames(centroids))))
-}
-
-sample_based_variable_genes <- function(dataset) {
-  indices <- sample.int(ncol(dataset$data), 10000)
-  dat <- dataset$data[, indices]
-  colnames(dat) <- seq_len(ncol(dat))
-  rownames(dat) <- as.character(rownames(dat))
-  return(variableGenes(SummarizedExperiment(dat), exp_labels=dataset$study_id[indices]))
-}
-
-compute_centroids <- function(dat) {
-  result <- lapply(unique(colnames(dat)),
-                   function(c) rowMeans(as.matrix(dat[, colnames(dat) == c])))
-  result <- do.call(cbind, result)
-  colnames(result) <- unique(colnames(dat))
+  counts <- do.call(cbind, lapply(datasets, function(df) assay(df)))
+  col_data <- do.call(rbind, lapply(datasets, function(df) colData(df)))
+  cell_names <- paste(col_data$study_id, rownames(col_data), sep = "_")
+  colnames(counts) <- cell_names
+  rownames(col_data) <- cell_names
+  result <- SingleCellExperiment(counts, colData = col_data)
   return(result)
 }
 
-get_study_id <- function(cluster_name) {
-  return(sapply(strsplit(cluster_name, "\\|"), head, 1))
-}
-
-simplify_barcode_suffix <- function(barcodes) {
-  suffix <- substring(barcodes, 18)
-  suffix_values <- unique(suffix)
-  for (i in seq_along(suffix_values)) {
-    suffix[suffix == suffix_values[i]] <- i
-  }
-  return(paste0(substring(barcodes, 1, 17), suffix))
+sample_based_variable_genes <- function(dataset) {
+  dat <- dataset[, sample.int(ncol(dataset), 10000)]
+  return(variableGenes(dat, exp_labels = dat$study_id))
 }
