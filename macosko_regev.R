@@ -1,14 +1,14 @@
 
-library(cellrangerRkit)
+## UDPATE this file according to the procedure described in the README in the dropbox
 
-MACOSKO_DIR <- "/home/fischer/data/biccn/raw_data_180521/Macosko_Regev"
+MACOSKO_DIR <- "/home/fischer/data/biccn/raw_data/Macosko_Regev"
 MACOSKO_10X_DIR <- file.path(MACOSKO_DIR, "motorcortex_snrnaseq_10x")
 
-macosko_10x <- function(data_dir = MACOSKO_10X_DIR) {
+macosko_10x_counts <- function(data_dir = MACOSKO_10X_DIR) {
   return(fuse_10x_dataset(file.path(data_dir, "macosko_motor_cortex_1")))
 }
 
-regev_10x <- function(data_dir = MACOSKO_10X_DIR) {
+regev_10x_counts <- function(data_dir = MACOSKO_10X_DIR) {
   return(fuse_10x_dataset(file.path(data_dir, "regev_motor_cortex_2")))
 }
 
@@ -24,9 +24,9 @@ fuse_10x_dataset <- function(data_dir) {
   return(count_matrix)
 }
 
-change_barcode_suffix <- function(dataset, suffix) {
+change_barcode_suffix <- function(dataset, lane_number) {
   return(paste0(
-      substring(colnames(dataset), 1, 17), suffix
+      substring(colnames(dataset), 1, 17), lane_number
   ))
 }
 
@@ -37,9 +37,4 @@ check_rowname_consistency <- function(dataset_list) {
   if (!is_consistent) {
     stop("Row names are not consistent across datasets.")
   }
-}
-
-if (!interactive()) {
-  args = commandArgs(trailingOnly = TRUE)
-  saveRDS(fuse_10x_dataset(args[1]), args[2])
 }
