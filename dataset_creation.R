@@ -1,13 +1,22 @@
+
 library(SingleCellExperiment)
 
 source("ecker.R", local=TRUE)
 source("zeng.R", local=TRUE)
 #source("macosko_regev.R", local=TRUE) ## TODO update this file
 
-create_zeng_10x_cells = function() {
-  data_ = match_count_and_cluster_info(zeng_10x_counts("10X_cells_MOp"),
-                                       zeng_clusters("10X_cells_MOp"))
-  return(create_sce(data_$counts, data_$clusters, "zeng_10x_cells"))
+create_zeng_datasets = function() {
+    saveRDS(create_zeng_10x("10X_cells_v2_MOp", "zeng_10x_cells_v2"), "zeng_10x_cells_v2.rds")
+    saveRDS(create_zeng_10x("10x_cells_v3_MOp", "zeng_10x_cells_v3"), "zeng_10x_cells_v3.rds")
+    saveRDS(create_zeng_10x("10x_nuclei_v2_MOp", "zeng_10x_nuclei_v2"), "zeng_10x_nuclei_v2.rds")
+    saveRDS(create_zeng_10x("10x_nuclei_v3_MOp", "zeng_10x_nuclei_v3"), "zeng_10x_nuclei_v3.rds")
+    saveRDS(create_zeng_smart("SMARTer_cells_MOp", "zeng_smart_cells"), "zeng_smart_cells.rds")
+    saveRDS(create_zeng_smart("SMARTer_nuclei_MOp", "zeng_smart_nuclei"), "zeng_smart_nuclei.rds")
+}
+
+create_zeng_10x = function(input_dir, study_id) {
+  data_ = match_count_and_cluster_info(zeng_10x_counts(input_dir), zeng_clusters(input_dir))
+  return(create_sce(data_$counts, data_$clusters, study_id))
 }
 
 match_count_and_cluster_info = function(counts, clusters) {
@@ -25,26 +34,9 @@ create_sce = function(counts, clusters, study_id) {
   return(result)
 }
 
-create_zeng_10x_nuclei = function() {
-  data_ = match_count_and_cluster_info(zeng_10x_counts("10x_nuclei_MOp"),
-                                       zeng_clusters("10x_nuclei_MOp"))
-  return(create_sce(data_$counts, data_$clusters, "zeng_10x_nuclei"))
-}
-
-create_zeng_smart_nuclei = function() {
-  counts = zeng_smart_counts("SMARTer_nuclei_MOp")
-  colnames(counts) = gsub("\\.", "-", colnames(counts))
-  clusters = zeng_clusters("SMARTer_nuclei_MOp")
-  data_ = match_count_and_cluster_info(counts, clusters)
-  return(create_sce(data_$counts, data_$clusters, "zeng_smart_nuclei"))
-}
-
-create_zeng_smart_cells = function() {
-  counts = zeng_smart_counts("SMARTer_cells_MOp")
-  colnames(counts) = gsub("\\.", "-", colnames(counts))
-  clusters = zeng_clusters("SMARTer_cells_MOp")
-  data_ = match_count_and_cluster_info(counts, clusters)
-  return(create_sce(data_$counts, data_$clusters, "zeng_smart_cells"))
+create_zeng_smart = function(input_dir, study_id) {
+  data_ = match_count_and_cluster_info(zeng_smart_counts(input_dir), zeng_clusters(input_dir))
+  return(create_sce(data_$counts, data_$clusters, study_id))
 }
 
 create_macosko_10x = function() {
