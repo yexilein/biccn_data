@@ -1,9 +1,35 @@
 
 library(SingleCellExperiment)
 
+current_dir_ = getwd()
+common_dir_ = "~/projects/common"
+
+setwd(common_dir_)
+source("brain_datasets.R")
+source("variable_genes.R")
+setwd(current_dir_)
 source("ecker.R", local=TRUE)
 source("zeng.R", local=TRUE)
 #source("macosko_regev.R", local=TRUE) ## TODO update this file
+
+
+create_combined_dataset = function() {
+    dataset = lapply(set_names(biccn_datasets()), load_biccn_dataset)
+    gc()
+    dataset = restrict_to_common_genes(dataset)
+    gc()
+    dataset = fuse_datasets(dataset)
+    saveRDS(dataset, "full_data.rds")
+}
+
+create_hvg_list = function() {
+    dataset = readRDS("full_data.rds")
+    hvg = variable_genes_by_dataset(dataset)
+    recurrence = table(unlist(hvg))
+    write(names(recurrence)[recurrence >= 6], "hvg_6.txt")
+    write(names(recurrence)[recurrence >= 7], "hvg_7.txt")
+    write(names(recurrence)[recurrence >= 8], "hvg_8.txt")
+}
 
 create_zeng_datasets = function() {
     saveRDS(create_zeng_10x("10X_cells_v2_MOp", "zeng_10x_cells_v2"), "zeng_10x_cells_v2.rds")
@@ -37,6 +63,29 @@ create_sce = function(counts, clusters, study_id) {
 create_zeng_smart = function(input_dir, study_id) {
   data_ = match_count_and_cluster_info(zeng_smart_counts(input_dir), zeng_clusters(input_dir))
   return(create_sce(data_$counts, data_$clusters, study_id))
+}
+
+update_broad_dataset = function(input_file = "old/190813/macosko_10x.rds") {
+    dataset = readRDS(input_file)
+    rownames(dataset) = convert_to_mgi_symbols_from_10x(rownames(dataset))
+    dataset$subclass_label = infer_subclass_labels(dataset)
+    names(assays(dataset))[1] = "counts"
+    result = SingleCellExperiment(assays = assays(dataset),
+                                  colData = colData(dataset))
+    return(result)
+}
+
+infer_subclass_labels = function(dataset) {
+    # Special rules
+    # L5 NP -> L5/6 NP
+    # Lamp5 Sncg -> Sncg
+    exceptions = c("L5 NP", "L5 PT")
+    labels = as.character(dataset$cluster_label)
+    labels[labels == "Lamp5 Sncg"] = "Sncg Lamp5"
+    labels = reduce_to_prefix(labels, c(valid_subclasses(), exceptions))
+    labels[labels == "L5 NP"] = "L5/6 NP"
+    labels[labels == "L5 PT"] = "L5 ET"
+    return(labels)
 }
 
 create_macosko_10x = function() {
