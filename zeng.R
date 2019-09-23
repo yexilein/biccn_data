@@ -2,7 +2,13 @@
 library(rhdf5)
 library(Matrix)
 
-ZENG_DIR = "/home/fischer/data/biccn/dropbox/BICCN MiniBrain JointDataAnalysis/Zeng"
+zeng_dir = function() {
+    "/home/fischer/data/biccn/dropbox/BICCN MiniBrain JointDataAnalysis/Zeng"
+}
+
+joint_dir = function() {
+    "/home/fischer/data/biccn/dropbox/BICCN MiniBrain JointDataAnalysis/Transcriptome_jointAnalysis"
+}
 
 zeng_10x_counts = function(ten_x_dir) {
   h5_data = h5read(file.path(ZENG_DIR, ten_x_dir, "umi_counts.h5"), "/")[[1]]
@@ -26,42 +32,40 @@ zeng_short_to_long_barcode = function(subdir) {
   return(result)
 }
 
-column_indices = function(col_limits) {
-  elements_per_col = col_limits[-1] - col_limits[-length(col_limits)]
-  return(rep(seq_along(elements_per_col), elements_per_col))
-}
-
 zeng_smart_counts = function(subdir) {
-  result = read.table(file.path(ZENG_DIR, subdir, "exon.counts.csv.gz"),
+  result = read.table(file.path(zeng_dir(), subdir, "exon.counts.csv.gz"),
                       header = TRUE, sep = ",", row.names = 1, check.names = FALSE)
   return(Matrix(as.matrix(result), sparse = TRUE))
 }
 
+macosko_v3_counts = function() {
+    subdir = file.path(joint_dir(), "10X_nuclei_v3_Broad")
+    result = Matrix::readMM(file.path(subdir, "matrix.mtx.gz"))
+    rownames(result) = read.csv(file.path(subdir, "features.csv"), stringsAsFactors=FALSE)$gene
+    colnames(result) = read.csv(file.path(subdir, "barcodes.csv"), stringsAsFactors=FALSE)$barcode
+    return(result)
+}
+
 zeng_split_seq = function() {
-  h5_data = h5read(file.path(ZENG_DIR, "Splitseq_MOp", "raw_counts.h5"), "/")
+  h5_data = h5read(file.path(zeng_dir(), "Splitseq_MOp", "raw_counts.h5"), "/")
   barcodes = sapply()
 }
 
-zeng_clusters = function(subdir, labels = c('cluster_label', 'subclass_label', 'class_label')) {
-  clusters = read.table(
-    file.path(ZENG_DIR, subdir, "cluster.membership.csv"),
-    sep = ",", header = TRUE, stringsAsFactors = FALSE
-  )
-  colnames(clusters) = c("cell_id", "cluster_id")
-  cluster_info = read.table(
-    file.path(ZENG_DIR, subdir, "cluster.annotation.csv"),
-    sep = ",", header = TRUE, stringsAsFactors = FALSE
-  )
-  cluster_id_match = match(clusters$cluster_id, cluster_info$cluster_id)
-  clusters = cbind(clusters, cluster_info[cluster_id_match, labels])
-  clusters = clusters[!is.na(clusters$cluster_label), ]
-    
-  clusters$is_qc = clusters$cell_id %in% qc_cells(subdir)
-  return(clusters)
+zeng_clusters = function(subdir, labels = c('cluster_label', 'subclass_label', 'class_label'), main_dir = zeng_dir()) {
+    data_dir = file.path(main_dir, subdir)
+    clusters = read.csv(file.path(data_dir, "cluster.membership.csv"), stringsAsFactors = FALSE)
+    colnames(clusters) = c("cell_id", "cluster_id")
+    cluster_info = read.csv(file.path(data_dir, "cluster.annotation.csv"), stringsAsFactors = FALSE)
+    cluster_id_match = match(clusters$cluster_id, cluster_info$cluster_id)
+    clusters = cbind(clusters, cluster_info[cluster_id_match, labels])
+    clusters = clusters[!is.na(clusters$cluster_label), ]
+
+    clusters$is_qc = clusters$cell_id %in% qc_cells(subdir)
+    return(clusters)
 }
 
-qc_cells = function(subdir) {
-    qc_cells = read.csv(file.path(ZENG_DIR, subdir, "QC.csv"), stringsAsFactors = FALSE)$x
+qc_cells = function(subdir, main_dir = zeng_dir()) {
+    qc_cells = read.csv(file.path(main_dir, subdir, "QC.csv"), stringsAsFactors = FALSE)$x
     return(qc_cells)
 }
 

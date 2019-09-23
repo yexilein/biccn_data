@@ -13,6 +13,10 @@ source("zeng.R", local=TRUE)
 #source("macosko_regev.R", local=TRUE) ## TODO update this file
 
 
+main = function() {
+    create_combined_dataset()
+}
+
 create_combined_dataset = function() {
     dataset = lapply(set_names(biccn_datasets()), load_biccn_dataset)
     gc()
@@ -88,6 +92,14 @@ infer_subclass_labels = function(dataset) {
     return(labels)
 }
 
+create_macosko_v3 = function() {
+    input_dir = "10X_nuclei_v3_Broad"
+    data_ = match_count_and_cluster_info(macosko_v3_counts(), zeng_clusters(input_dir, main_dir = joint_dir()))
+    result = create_sce(data_$counts, data_$clusters, "macosko_10x_nuclei_v3")
+    passed_initial_qc = !is.na(sce$is_qc)
+    return(result[, passed_initial_qc])
+}
+
 create_macosko_10x = function() {
   counts = macosko_10x_counts()
   colnames(counts) = paste0(colnames(counts), substring(colnames(counts), 18))
@@ -139,4 +151,8 @@ create_ecker_snmc = function() {
     data_ = match_count_and_cluster_info(ecker_snmc_gene_counts(),
                                          ecker_snmc_metadata())
     return(create_sce(data_$counts, data_$clusters, "ecker_snmc"))
+}
+
+if (!interactive()) {
+    main()
 }
